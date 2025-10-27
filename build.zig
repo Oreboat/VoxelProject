@@ -46,6 +46,20 @@ pub fn build(b: *std.Build) void {
     
     mod.linkLibrary(zglfw.artifact("glfw"));
 
+    const sdl_dep = b.dependency("sdl", .{
+    .target = target,
+    .optimize = optimize,
+    //.preferred_linkage = .static,
+    //.strip = null,
+    //.sanitize_c = null,
+    //.pic = null,
+    //.lto = null,
+    //.emscripten_pthreads = false,
+    //.install_build_config_h = false,  
+    });
+    const sdl_lib = sdl_dep.artifact("SDL3");
+    mod.linkLibrary(sdl_lib);
+
     const vulkan = b.dependency("vulkan", .{
         .registry = b.path("headers/vk.xml")
     });
