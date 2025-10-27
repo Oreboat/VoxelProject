@@ -4,6 +4,8 @@ const window = @import("renderer/window.zig");
 const entity = @import("ecs/entity.zig");
 const render = @import("renderer/render.zig");
 
+pub const Renderer = enum { SDL, VULKAN };
+
 pub const App = struct {
     const Ready = flecs.OnStart;
     const PreUpdate = flecs.PreUpdate;
@@ -11,7 +13,7 @@ pub const App = struct {
     const PostUpdate = flecs.PostUpdate;
     world: *flecs.world_t,
 
-    pub fn new() !*App {
+    pub fn new(render_backend: Renderer) !*App {
         const app = App{ .world = flecs.init() };
 
         app.component(window.Window);
@@ -19,7 +21,9 @@ pub const App = struct {
 
         const renderer = app.new_entity("renderer");
         renderer.set(window.Window, window.Window.new());
-        renderer.set(vulkan.VulkanEngine);
+        switch (render_backend) {
+            Renderer.VULKAN => renderer.set(vulkan.VulkanEngine),
+        }
 
         app.system(App.Ready, render.renderer);
 
