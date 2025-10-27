@@ -1,4 +1,4 @@
-const c =  @cImport({
+pub const c = @cImport({
     @cDefine("SDL_DISABLE_OLD_NAMES", {});
     @cInclude("SDL3/SDL.h");
     @cInclude("SDL3/SDL_revision.h");
@@ -7,5 +7,7 @@ const c =  @cImport({
 });
 
 pub const Window = struct {
-    window: *c.SDL_Window
+    window: *c.SDL_Window,
+    should_close: bool,
+    pub fn new() Window {}
 };
