@@ -1,31 +1,41 @@
 const flecs = @import("flecs");
 const vulkan = @import("renderer/vulkan.zig");
+const sdl = @import("renderer/sdl.zig");
 const window = @import("renderer/window.zig");
 const entity = @import("ecs/entity.zig");
 const render = @import("renderer/render.zig");
+const backend = @import("renderer/backend.zig");
+const c = @cImport({
+    @cDefine("SDL_DISABLE_OLD_NAMES", {});
+    @cInclude("SDL3/SDL.h");
+    @cInclude("SDL3/SDL_revision.h");
+    @cDefine("SDL_MAIN_HANDLED", {}); // We are providing our own entry point
+    @cInclude("SDL3/SDL_main.h");
+});
 
-pub const Renderer = enum { SDL, VULKAN };
 
 pub const App = struct {
-    const Ready = flecs.OnStart;
-    const PreUpdate = flecs.PreUpdate;
-    const Update = flecs.OnUpdate;
-    const PostUpdate = flecs.PostUpdate;
     world: *flecs.world_t,
 
-    pub fn new(render_backend: Renderer) !*App {
-        const app = App{ .world = flecs.init() };
+    pub fn new(render_backend: backend.Renderer) !*App {
+        var app = App{ .world = flecs.init() };
 
         app.component(window.Window);
         app.component(vulkan.VulkanEngine);
+        app.tag(sdl.SDL);
 
-        const renderer = app.new_entity("renderer");
-        renderer.set(window.Window, window.Window.new());
+        var renderer = app.new_entity("renderer");
+        
         switch (render_backend) {
-            Renderer.VULKAN => renderer.set(vulkan.VulkanEngine),
+            backend.Renderer.VULKAN => {
+                renderer.set(window.Window, window.Window.new("Vulkan Engine Project", 1280, 720, c.SDL_WINDOW_VULKAN));
+                //renderer.set(vulkan.VulkanEngine, {});
+            },
+            backend.Renderer.SDL => {
+                renderer.set(window.Window, window.Window.new("Engine Project", 1280, 720, c.SDL_WINDOW_VULKAN));
+            }
         }
-
-        app.system(App.Ready, render.renderer);
+        app.system(flecs.OnStart, render.renderer);
 
         return &app;
     }
@@ -34,15 +44,19 @@ pub const App = struct {
         flecs.COMPONENT(self.world, T);
     }
 
+    pub fn tag(self: *App, comptime T: type) void{
+        flecs.TAG(self.world, T);
+    }
+
     pub fn new_entity(self: *App, name: [*:0]const u8) entity.Entity {
         return entity.Entity{ .world = self.world, .id = flecs.new_entity(self.world, name) };
     }
 
-    pub fn system(self: *App, phase: u64, system_desc: *flecs.system_desc_t) void {
-        flecs.SYSTEM(self.world, phase, system_desc);
+    pub fn system(self: *App, phase: u64, comptime fn_system: anytype) void {
+       _ = flecs.ADD_SYSTEM(self.world,"", phase, fn_system);
     }
 
     pub fn progress(self: *App) void {
-        flecs.progress(self.world, 0);
+        _ = flecs.progress(self.world, 0);
     }
 };

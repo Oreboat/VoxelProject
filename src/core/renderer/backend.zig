@@ -1,0 +1,1 @@
+pub const Renderer = enum { SDL, VULKAN };

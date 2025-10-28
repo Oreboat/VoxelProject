@@ -7,7 +7,13 @@ pub const c = @cImport({
 });
 
 pub const Window = struct {
-    window: *c.SDL_Window,
+    window: ?*c.struct_SDL_Window,
     should_close: bool,
-    pub fn new() Window {}
+    pub fn new(title: [*c]const u8, width: c_int, height: c_int, flags: u64) Window {
+        //const window = c.SDL_CreateWindow(title, width, height, 0);
+        return Window{
+            .window = c.SDL_CreateWindow(title, width, height, flags),
+            .should_close = false
+        };
+    }
 };
