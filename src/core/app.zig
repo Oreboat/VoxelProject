@@ -29,7 +29,7 @@ pub const App = struct {
         switch (render_backend) {
             backend.Renderer.VULKAN => {
                 renderer.set(window.Window, window.Window.new("Vulkan Engine Project", 1280, 720, c.SDL_WINDOW_VULKAN));
-                //renderer.set(vulkan.VulkanEngine, {});
+                renderer.set(vulkan.VulkanEngine, try vulkan.VulkanEngine.new());
             },
             backend.Renderer.SDL => {
                 renderer.set(window.Window, window.Window.new("Engine Project", 1280, 720, c.SDL_WINDOW_VULKAN));
